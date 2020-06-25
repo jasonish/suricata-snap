@@ -1,0 +1,116 @@
+name: suricata
+base: core18
+version: '5.0.3'
+summary: Network threat detection engine
+description: |
+  The Suricata Engine is an Open Source Next Generation Intrusion
+  Detection and Prevention Engine. This engine is not intended to
+  just replace or emulate the existing tools in the industry, but
+  will bring new ideas and technologies to the field. This new Engine
+  supports Multi-threading, Automatic Protocol Detection (IP, TCP,
+  UDP, ICMP, HTTP, TLS, FTP and SMB! ), Gzip Decompression, Fast IP
+  Matching, and GeoIP identification.
+
+grade: stable
+
+confinement: strict
+
+parts:
+  build:
+    plugin: autotools
+    source-type: tar
+    source: https://www.openinfosecfoundation.org/download/suricata-5.0.3.tar.gz
+    build-packages:
+      - pkg-config
+      - autoconf
+      - automake
+      - libtool
+      - libpcre3
+      - libpcre3-dbg
+      - libpcre3-dev
+      - build-essential
+      - libpcap-dev
+      - libnet1-dev
+      - libyaml-0-2
+      - libyaml-dev
+      - zlib1g
+      - zlib1g-dev
+      - libcap-ng-dev
+      - libcap-ng0
+      - make
+      - libmagic-dev
+      - libjansson-dev
+      - libnss3-dev
+      - libgeoip-dev
+      - liblua5.1-0-dev
+      - libhiredis-dev
+      - libevent-dev
+      - python-yaml
+      - python3-distutils
+      - rustc
+      - cargo
+      - libnetfilter-queue-dev
+      - libnetfilter-queue1
+      - libnetfilter-log-dev
+      - libnetfilter-log1
+      - libnfnetlink-dev
+      - libnfnetlink0
+    stage-packages:
+      - libjansson4
+      - libmagic1
+      - libnet1
+      - libnspr4
+      - libnss3
+      - libpcap0.8
+      - curl
+    override-build: |
+      (cd suricata-update && patch -p1 < $SNAPCRAFT_PROJECT_DIR/suricata-update.patch)
+      snapcraftctl build
+      make install-conf DESTDIR=/root/parts/build/install
+      mv /root/parts/build/install/etc/suricata /root/parts/build/install/usr/share/suricata/etc
+      cp /usr/lib/file/magic.mgc /root/parts/build/install/usr/share/suricata
+    configflags:
+      - --prefix=/usr
+      - --sysconfdir=/etc
+      - --localstatedir=/var
+      - --disable-shared
+      - --disable-gccmarch-native
+  service:
+    plugin: dump
+    source: ./local
+
+apps:
+  suricata:
+    command: suricata
+    plugs:
+      - network-bind
+      - home
+      - network-control
+    environment:
+      MAGIC: $SNAP/usr/share/suricata/magic.mgc
+  suricata-service:
+    command: service.sh
+    daemon: simple
+    plugs:
+      # Appears to be required to work with unix sockets.
+      - network-bind
+      - network-control
+    environment:
+      MAGIC: $SNAP/usr/share/suricata/magic.mgc
+  update:
+    command: suricata-update
+    plugs:
+      - network
+      - home
+  sc:
+    command: suricatasc
+    plugs:
+      - network-bind
+
+layout:
+  /var/lib/suricata:
+    bind: $SNAP_DATA/lib
+  /etc/suricata:
+    bind: $SNAP_DATA/etc
+  /var/log/suricata:
+    bind: $SNAP_DATA/log

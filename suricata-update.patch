@@ -1,0 +1,20 @@
+diff --git a/suricata/update/net.py b/suricata/update/net.py
+index 8135441..620351c 100644
+--- a/suricata/update/net.py
++++ b/suricata/update/net.py
+@@ -68,9 +68,12 @@ def build_user_agent():
+     params.append("Python: %s" % (platform.python_version()))
+ 
+     if uname_system == "Linux" and hasattr(platform, "linux_distribution"):
+-        distribution = platform.linux_distribution()
+-        params.append("Dist: %s/%s" % (
+-            str(distribution[0]), str(distribution[1])))
++        try:
++            distribution = platform.linux_distribution()
++            params.append("Dist: %s/%s" % (
++                str(distribution[0]), str(distribution[1])))
++        except:
++            pass
+ 
+     params.append("Suricata: %s" % (user_agent_suricata_verison))
+ 

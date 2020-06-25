@@ -1,0 +1,6 @@
+#! /bin/sh
+
+set -e
+set -x
+
+cp -a $SNAP/usr/share/suricata/etc/* $SNAP_DATA/etc/
